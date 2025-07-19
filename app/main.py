@@ -5,7 +5,7 @@ class Parser:
         self._data = data
         self._current = 0
 
-    def to_python(self) -> str:
+    def parse(self) -> str:
         """Turns an RESP encoded data string to Python primitives."""
         if self._data[self._current] == ord("$"):
             self._current += 1
@@ -23,10 +23,14 @@ class Parser:
         self._current += 2 # Consume the \r\n
         return length
 
-    def _parse_array(self):
+    def _parse_array(self) -> list[str]:
+        """Parses an array.
+
+        An array has form *<length>\r\n<element1><element2>...<elementn>\r\n
+        """
         arr = []
         for _ in range(self._parse_length()):
-            arr.append(self.to_python())
+            arr.append(self.parse())
         return arr
 
     def _parse_data(self, length) -> str:
@@ -36,20 +40,22 @@ class Parser:
             self._current += 1
         return data
 
-    def _parse_bulk_string(self):
+    def _parse_bulk_string(self) -> str:
+        """Parses a bulk string.
+
+        A bulk string has form $<length>\r\n<data>\r\n
+        """
         length = self._parse_length()
         bulk_string = self._parse_data(length)
         self._current += 2
         return bulk_string
 
-async def handle_ping(
+async def handle_command(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter
 ) -> None:
     while data is not None:
         data = await reader.read(1024)
-        print(f"{data=}")
-        cmd, *args = Parser(data).to_python()
-        print(f"{cmd=}")
+        cmd, *args = Parser(data).parse()
         if cmd == "PING":
             writer.write(b"+PONG\r\n")
         elif cmd == "ECHO":
@@ -60,7 +66,7 @@ async def handle_ping(
 
 
 async def run_server() -> None:
-    server = await asyncio.start_server(handle_ping, "localhost", 6379)
+    server = await asyncio.start_server(handle_command, "localhost", 6379)
     async with server:
         await server.serve_forever()
 
