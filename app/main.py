@@ -45,7 +45,7 @@ class Parser:
 async def handle_ping(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter
 ) -> None:
-    while True:
+    while data is not None:
         data = await reader.read(1024)
         print(f"{data=}")
         cmd, *args = Parser(data).to_python()
@@ -55,6 +55,8 @@ async def handle_ping(
         elif cmd == "ECHO":
             writer.write(b"+" + bytes(args[0], "utf-8") + b"\r\n")
         await writer.drain()
+    writer.close()
+    await writer.wait_closed()
 
 
 async def run_server() -> None:
