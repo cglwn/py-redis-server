@@ -17,8 +17,10 @@ async def run_server() -> None:
 
 
 def main():
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(run_server())
+    try:
+        asyncio.run(run_server())
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
