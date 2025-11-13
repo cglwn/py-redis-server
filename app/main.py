@@ -20,7 +20,7 @@ def main():
     try:
         asyncio.run(run_server())
     except KeyboardInterrupt:
-        pass
+        print()
 
 
 if __name__ == "__main__":
